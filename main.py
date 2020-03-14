@@ -1,6 +1,7 @@
 
 import pygame
 import time
+import sys
 
 pygame.init()
 width, height = 800, 600
@@ -25,3 +26,4 @@ while True:
 
     pygame.display.flip()
     time.sleep(10 / 1000)
+
