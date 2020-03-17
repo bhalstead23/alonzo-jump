@@ -2,6 +2,7 @@
 
 import time
 import sys
+import random
 import pygame
 from pygame.locals import *
 
@@ -9,23 +10,42 @@ pygame.init()
 
 BLACK = (0, 0, 0)
 SKYBLUE = (176, 223, 229)
+# MAP = [
+# "...............*",
+# "..............*.",
+# ".............*..",
+# "............*...",
+# "...........*....",
+# "..........*.....",
+# ".........*......",
+# "........*.......",
+# ".......*........",
+# "......*.........",
+# ".....*..........",
+# "....*...........",
+# "...*............",
+# "..*.............",
+# ".*..............",
+# "*..............."]
+
 MAP = [
-"...............*",
-"..............*.",
-".............*..",
-"............*...",
-"...........*....",
-"..........*.....",
-".........*......",
-"........*.......",
-".......*........",
-"......*.........",
-".....*..........",
-"....*...........",
-"...*............",
-"..*.............",
-".*..............",
-"*..............."]
+list("...............*"),
+list("..............*."),
+list(".............*.."),
+list("............*..."),
+list("...........*...."),
+list("..........*....."),
+list(".........*......"),
+list("........*......."),
+list(".......*........"),
+list("......*........."),
+list(".....*.........."),
+list("....*..........."),
+list("...*............"),
+list("..*............."),
+list(".*..............") ]
+
+
 
 def keyControl(vel, accel, friction):
     keys = pygame.key.get_pressed()
@@ -45,7 +65,6 @@ class XboxControl():
     def update(self, player, platforms, runSpeed, jumpPower, g):
         player.vel[0] = self.xboxJoy.get_axis(0) * runSpeed
         if self.xboxJoy.get_button(0) == 1 and player.vel[1] == 0: player.vel[1] = -jumpPower
-        elif pygame.sprite.spritecollideany(player, platforms): player.vel[1] = 0
         else: player.vel[1] += g
 
 class Platform(pygame.sprite.Sprite):
@@ -73,28 +92,23 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, coords, picture):
        # Call the parent class (Sprite) constructor
        pygame.sprite.Sprite.__init__(self)
+       self.coords = coords
        self.vel = [0, 0]
        self.image = pygame.image.load(picture)
-
-
-       # Fetch the rectangle object that has the dimensions of the image
-       # Update the position of this object by setting the values of rect.x and rect.y
        self.rect = self.image.get_rect()
-       self.rect.x = coords[0]
-       self.rect.y = coords[1]
+       self.rect.x = self.coords[0]
+       self.rect.y = self.coords[1]
+       self.mask = pygame.mask.from_surface(self.image)
 
-def find_all(string, sub):
+def find_all(searchList, elem):
     start = 0
     indices = []
-    while start < len(string):
-        start = string.find(sub, start)
-        if start == -1: break
-        indices.append(start)
-        start += len(sub)
+    for i in range(0, len(searchList)):
+        if searchList[i] == elem: indices.append(i)
     return indices
 
-
 def main():
+    pygame.display.set_caption("crab game")
     width, height = 800, 800
     backgroundColor = SKYBLUE
     done = False
@@ -102,7 +116,7 @@ def main():
     control = XboxControl()
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((width, height))
-    alonzo = Player([200,200], "3D Alonzo.png")
+    
     # alonzoRight = alonzo.image
     # alonzoLeft = pygame.transform.flip(alonzo.image, True, False)
     song = pygame.mixer.music.load("02 Nanobots.mp3")
@@ -110,6 +124,8 @@ def main():
 
     platformList = []
     platformGroup = pygame.sprite.Group()
+    random.shuffle(MAP)
+    MAP.append("****************")
     for line in MAP:
         print(line)
         for a in find_all(line, '*'):
@@ -117,6 +133,12 @@ def main():
     for i in platformList:
         platformGroup.add(i)
     print(len(platformList))
+
+    alonzo = Player([300,200], "3D Alonzo.png")
+    while isinstance(pygame.sprite.spritecollideany(alonzo, platformGroup), pygame.sprite.Sprite):
+        alonzo.coords = [random.randint(100, 700), random.randint(100, 700)]
+
+    # main game loop:
     while not done:
 
         for event in pygame.event.get(): 
@@ -130,14 +152,18 @@ def main():
             alonzo.vel[0] = 0
         if (alonzo.rect.top + alonzo.vel[1]) < 0 or (alonzo.rect.bottom + alonzo.vel[1]) > height:
             alonzo.vel[1] = 0
+        for i in platformList:
+            if i.rect.colliderect(alonzo.rect.move(alonzo.vel[0], 0)): alonzo.vel[0] = 0
+            if i.rect.colliderect(alonzo.rect.move(0, alonzo.vel[1])): alonzo.vel[1] = 0
         # if pygame.key.get_pressed()[K_d] : alonzo.image = alonzoRight
         # elif pygame.key.get_pressed()[K_a]: alonzo.image = alonzoLeft
+        olist = alonzo.mask.outline()
+        pygame.draw.polygon(screen,(200,150,150),olist,0)
 
         screen.blit(alonzo.image, alonzo.rect)
         for i in platformList:
             screen.blit(i.image, i.rect)
-
-        alonzo.rect = alonzo.rect.move(alonzo.vel)
+            i.rect = i.rect.move(-alonzo.vel[0], -alonzo.vel[1])
         for event in pygame.event.get(): 
             if event.type == pygame.QUIT: done = True
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: done = True
