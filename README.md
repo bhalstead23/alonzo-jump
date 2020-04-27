@@ -1,6 +1,6 @@
 # alonzo-jump
 
-Written by Brendan Halstead for the AP CSP Create Task. 
+Written by Brendan Halstead for the AP Computer Science Principles Create Task. 
 
 Really fun game that exists for the sole purpose of foisting the glorious 3D Alonzo upon the eyes of the unsuspecting AP graders.
 Written to work with an Xbox One controller connected via USB. Further modification will probably be needed to function on another machine. 
